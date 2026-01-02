@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blood Cold Chain - Blockchain Management System</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body class="min-h-screen text-slate-800">
+    <!-- Header -->
+    <nav class="gradient-bg shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-tint text-white text-3xl"></i>
+                    <div>
+                        <h1 class="text-white text-2xl font-bold">Blood Cold Chain</h1>
+                        <p class="text-purple-200 text-sm">Blockchain Management System</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <select id="accountSelector" disabled class="bg-gray-300 text-gray-600 px-3 py-2 rounded-lg font-medium text-sm cursor-not-allowed">
+                        <option value="0">🏥 Admin (Blood Bank)</option>
+                        <option value="1">🩸 Kızılay (Blood Bank)</option>
+                        <option value="2">🚚 DHL (Transporter)</option>
+                        <option value="3">🏨 Hospital</option>
+                        <option value="4">📡 IoT Sensor</option>
+                    </select>
+                    <div id="connectionStatus" class="flex items-center space-x-2">
+                        <span id="statusDot" class="w-3 h-3 bg-red-500 rounded-full pulse-animation"></span>
+                        <span id="statusText" class="text-white text-sm">Disconnected</span>
+                    </div>
+                    <button id="connectBtn" class="bg-white text-purple-600 px-4 py-2 rounded-lg font-semibold hover:bg-purple-100 transition">
+                        <i class="fas fa-wallet mr-2"></i>Connect
+                    </button>
+                    <button id="logoutBtn" class="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 transition">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Log Out
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Role Info Banner -->
+    <div id="roleBanner" class="bg-blue-600 text-white py-2 px-4 text-center text-sm hidden">
+        <span id="roleInfo"></span>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-md p-6 card-hover transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">Total Blood Bags</p>
+                        <h3 id="totalBags" class="text-3xl font-bold text-gray-800">0</h3>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-full">
+                        <i class="fas fa-box text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-6 card-hover transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">In Transit</p>
+                        <h3 id="inTransit" class="text-3xl font-bold text-yellow-600">0</h3>
+                    </div>
+                    <div class="bg-yellow-100 p-3 rounded-full">
+                        <i class="fas fa-truck text-yellow-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-6 card-hover transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">Delivered</p>
+                        <h3 id="delivered" class="text-3xl font-bold text-green-600">0</h3>
+                    </div>
+                    <div class="bg-green-100 p-3 rounded-full">
+                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-6 card-hover transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">Spoiled</p>
+                        <h3 id="spoiled" class="text-3xl font-bold text-red-600">0</h3>
+                    </div>
+                    <div class="bg-red-100 p-3 rounded-full">
+                        <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="bg-white rounded-xl shadow-md mb-8">
+            <div class="border-b">
+                <nav class="flex space-x-0">
+                    <button class="tab-btn active px-6 py-4 text-gray-600 hover:text-purple-600 font-medium border-b-2 border-transparent hover:border-purple-600 transition" data-tab="register">
+                        <i class="fas fa-plus-circle mr-2"></i>Register Donation
+                    </button>
+                    <button class="tab-btn px-6 py-4 text-gray-600 hover:text-purple-600 font-medium border-b-2 border-transparent hover:border-purple-600 transition" data-tab="transfer">
+                        <i class="fas fa-exchange-alt mr-2"></i>Transfer Ownership
+                    </button>
+                    <button class="tab-btn px-6 py-4 text-gray-600 hover:text-purple-600 font-medium border-b-2 border-transparent hover:border-purple-600 transition" data-tab="temperature">
+                        <i class="fas fa-thermometer-half mr-2"></i>Record Temperature
+                    </button>
+                    <button class="tab-btn px-6 py-4 text-gray-600 hover:text-purple-600 font-medium border-b-2 border-transparent hover:border-purple-600 transition" data-tab="history">
+                        <i class="fas fa-history mr-2"></i>View History
+                    </button>
+                    <button class="tab-btn px-6 py-4 text-gray-600 hover:text-purple-600 font-medium border-b-2 border-transparent hover:border-purple-600 transition" data-tab="bags">
+                        <i class="fas fa-list mr-2"></i>All Bags
+                    </button>
+                    <button class="tab-btn px-6 py-4 text-gray-600 hover:text-purple-600 font-medium border-b-2 border-transparent hover:border-purple-600 transition" data-tab="ipfs">
+                        <i class="fas fa-cloud mr-2"></i>IPFS Documents
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Tab Contents -->
+            <div class="p-6">
+                <!-- Register Donation Tab -->
+                <div id="registerTab" class="tab-content">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">
+                        <i class="fas fa-tint text-red-500 mr-2"></i>Register New Blood Donation
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">Bag ID</label>
+                            <input type="text" id="regBagId" placeholder="e.g., BAG-2024-001" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">Blood Type</label>
+                            <select id="regBloodType" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                <option value="0">A+</option>
+                                <option value="1">A-</option>
+                                <option value="2">B+</option>
+                                <option value="3">B-</option>
+                                <option value="4">AB+</option>
+                                <option value="5">AB-</option>
+                                <option value="6">O+</option>
+                                <option value="7">O-</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">Expiry (Days)</label>
+                            <input type="number" id="regExpiryDays" value="42" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">
+                                <i class="fas fa-cloud-upload-alt mr-1"></i>Documents (Optional)
+                            </label>
+                            <input type="file" id="regIpfsFile" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" accept=".pdf,.jpg,.jpeg,.png,.json">
+                            <p class="text-gray-500 text-xs mt-1">Certificate, test results, or photo (PDF, JPG, PNG, JSON)</p>
+                        </div>
+                    </div>
+                    <div id="ipfsUploadStatus" class="mt-4 hidden">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <div class="flex items-center">
+                                <i class="fas fa-spinner fa-spin text-blue-500 mr-2"></i>
+                                <span class="text-blue-700" id="ipfsStatusText">Uploading to IPFS...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="ipfsHashDisplay" class="mt-4 hidden">
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                    <span class="text-green-700">IPFS Hash: </span>
+                                    <code id="ipfsHashValue" class="text-green-800 bg-green-100 px-2 py-1 rounded text-sm"></code>
+                                </div>
+                                <a id="ipfsLink" href="#" target="_blank" class="text-blue-600 hover:text-blue-800">
+                                    <i class="fas fa-external-link-alt"></i> View
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="registerDonationBtn" class="mt-6 bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition">
+                        <i class="fas fa-plus mr-2"></i>Register Donation
+                    </button>
+                </div>
+
+                <!-- Transfer Ownership Tab -->
+                <div id="transferTab" class="tab-content hidden">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">
+                        <i class="fas fa-exchange-alt text-blue-500 mr-2"></i>Transfer Bag Ownership
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">Bag ID</label>
+                            <input type="text" id="transBagId" placeholder="e.g., BAG-2024-001" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">New Owner</label>
+                            <select id="transToAddress" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                <option value="">Select recipient...</option>
+                            </select>
+                            <p class="text-gray-500 text-xs mt-1">Or enter address manually below:</p>
+                            <input type="text" id="transToAddressManual" placeholder="0x... (optional manual entry)" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent mt-2">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-gray-700 font-medium mb-2">Transfer Notes</label>
+                            <textarea id="transNotes" placeholder="Enter transfer notes..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <button id="transferOwnershipBtn" class="mt-6 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+                        <i class="fas fa-paper-plane mr-2"></i>Transfer Ownership
+                    </button>
+                </div>
+
+                <!-- Record Temperature Tab -->
+                <div id="temperatureTab" class="tab-content hidden">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">
+                        <i class="fas fa-thermometer-half text-orange-500 mr-2"></i>Record Temperature
+                    </h2>
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                        <div class="flex">
+                            <i class="fas fa-info-circle text-yellow-400 mt-1 mr-3"></i>
+                            <div>
+                                <p class="text-yellow-700 font-medium">Safe Temperature Range</p>
+                                <p class="text-yellow-600 text-sm">Blood products must be stored between <strong>2°C to 6°C</strong>. Temperature outside this range will mark the bag as SPOILED.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">Bag ID</label>
+                            <input type="text" id="tempBagId" placeholder="e.g., KAN-001" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">Temperature (°C)</label>
+                            <input type="number" id="tempValue" step="0.01" placeholder="e.g., 4.5" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        </div>
+                        <div class="md:col-span-2">
+                            <button id="recordTemperatureBtn" class="w-full bg-orange-600 text-white px-6 py-4 rounded-lg font-semibold hover:bg-orange-700 transition text-lg">
+                                <i class="fas fa-thermometer-half mr-2"></i>🌡️ SICAKLIK KAYDET
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View History Tab -->
+                <div id="historyTab" class="tab-content hidden">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">
+                        <i class="fas fa-history text-green-500 mr-2"></i>View Bag History
+                    </h2>
+                    <div class="flex gap-4 mb-6">
+                        <input type="text" id="historyBagId" placeholder="Enter Bag ID" class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        <button id="getBagHistoryBtn" class="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition">
+                            <i class="fas fa-search mr-2"></i>Search
+                        </button>
+                    </div>
+                    <div id="historyResult" class="hidden"></div>
+                </div>
+
+                <!-- All Bags Tab -->
+                <div id="bagsTab" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-800">
+                            <i class="fas fa-list text-purple-500 mr-2"></i>All Blood Bags
+                        </h2>
+                        <button id="loadAllBagsBtn" class="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition">
+                            <i class="fas fa-sync-alt mr-2"></i>Refresh
+                        </button>
+                    </div>
+                    <div id="bagsTable" class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bag ID</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Blood Type</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Current Owner</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">IPFS</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bagsTableBody" class="divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- IPFS Documents Tab -->
+                <div id="ipfsTab" class="tab-content hidden">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">
+                        <i class="fas fa-cloud text-blue-500 mr-2"></i>IPFS Document Management
+                    </h2>
+                    
+                    <!-- IPFS Status -->
+                    <div id="ipfsConfigStatus" class="mb-6">
+                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <span class="text-gray-600 font-medium">IPFS Provider Status: </span>
+                                    <span id="ipfsProviderStatus" class="text-gray-500">Checking...</span>
+                                </div>
+                                <button id="checkIPFSStatusBtn" class="text-blue-600 hover:text-blue-800">
+                                    <i class="fas fa-sync-alt mr-1"></i> Refresh
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Upload Document Section -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+                        <h3 class="text-lg font-semibold text-blue-800 mb-4">
+                            <i class="fas fa-upload mr-2"></i>Upload Document to IPFS
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-blue-700 font-medium mb-2">Bag ID</label>
+                                <input type="text" id="ipfsBagId" placeholder="e.g., BAG-2024-001" class="w-full px-4 py-3 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-blue-700 font-medium mb-2">Document Type</label>
+                                <select id="ipfsDocType" class="w-full px-4 py-3 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    <option value="certificate">Certificate</option>
+                                    <option value="test_result">Test Result</option>
+                                    <option value="photo">Photo</option>
+                                    <option value="report">Report</option>
+                                    <option value="document">Other Document</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-blue-700 font-medium mb-2">File</label>
+                                <input type="file" id="ipfsDocFile" class="w-full px-4 py-3 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500" accept=".pdf,.jpg,.jpeg,.png,.json,.doc,.docx">
+                            </div>
+                        </div>
+                        <button id="uploadIPFSDocumentBtn" class="mt-4 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+                            <i class="fas fa-cloud-upload-alt mr-2"></i>Upload & Record on Blockchain
+                        </button>
+                        <div id="ipfsUploadResult" class="mt-4 hidden"></div>
+                    </div>
+
+                    <!-- View Documents Section -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                            <i class="fas fa-folder-open mr-2"></i>View Bag Documents
+                        </h3>
+                        <div class="flex gap-4 mb-4">
+                            <input type="text" id="ipfsViewBagId" placeholder="Enter Bag ID" class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                            <button id="loadIPFSDocumentsBtn" class="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition">
+                                <i class="fas fa-search mr-2"></i>Load Documents
+                            </button>
+                        </div>
+                        <div id="ipfsDocumentsList" class="hidden">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">IPFS Hash</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Uploaded</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">By</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ipfsDocsTableBody" class="divide-y divide-gray-200"></tbody>
+                            </table>
+                        </div>
+                        <div id="ipfsNoDocuments" class="text-center text-gray-500 py-8 hidden">
+                            <i class="fas fa-folder-open text-4xl mb-2"></i>
+                            <p>No documents found for this bag</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction Log -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">
+                    <i class="fas fa-clipboard-list text-gray-500 mr-2"></i>Transaction Log
+                </h2>
+                <button id="clearLogsBtn" class="text-red-500 hover:text-red-700 text-sm">
+                    <i class="fas fa-trash mr-1"></i>Clear Logs
+                </button>
+            </div>
+            <div id="txLog" class="space-y-2 max-h-64 overflow-y-auto">
+                <p class="text-gray-500 text-center py-4">No transactions yet</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-gray-400">Blood Cold Chain Management System</p>
+            <p class="text-gray-500 text-sm">By Yusuf Emre Elmali & Hasan Demiryurek</p>
+        </div>
+    </footer>
+
+    <!-- Scripts - Modular approach -->
+    <script src="auth.js"></script>
+    <script src="utils.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

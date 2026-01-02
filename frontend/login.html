@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giriş - Blood Cold Chain</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+    <script src="auth.js"></script>
+</head>
+<body class="login-page">
+    <!-- Animated Particles -->
+    <div class="particles">
+        <div class="particle" style="left: 10%; animation-delay: 0s;"></div>
+        <div class="particle" style="left: 20%; animation-delay: 2s;"></div>
+        <div class="particle" style="left: 30%; animation-delay: 4s;"></div>
+        <div class="particle" style="left: 40%; animation-delay: 1s;"></div>
+        <div class="particle" style="left: 50%; animation-delay: 3s;"></div>
+        <div class="particle" style="left: 60%; animation-delay: 5s;"></div>
+        <div class="particle" style="left: 70%; animation-delay: 2.5s;"></div>
+        <div class="particle" style="left: 80%; animation-delay: 1.5s;"></div>
+        <div class="particle" style="left: 90%; animation-delay: 4.5s;"></div>
+    </div>
+
+    <div class="login-card">
+        <!-- Logo & Title -->
+        <div class="text-center mb-8">
+            <div class="blood-drop">
+                <i class="fas fa-tint text-blue-500 text-6xl mb-4"></i>
+            </div>
+            <h1 class="login-title">Blood Cold Chain</h1>
+            <p class="login-subtitle">Blockchain Management System</p>
+            <div class="flex justify-center mt-4 space-x-2">
+                <span class="tag tag-purple">
+                    <i class="fas fa-link mr-1"></i>Blockchain
+                </span>
+                <span class="tag tag-blue">
+                    <i class="fas fa-thermometer-half mr-1"></i>IoT
+                </span>
+                <span class="tag tag-green">
+                    <i class="fas fa-shield-alt mr-1"></i>Secure
+                </span>
+            </div>
+        </div>
+        
+        <!-- Login Form -->
+        <div class="space-y-5">
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-user-circle mr-2 text-purple-500"></i>Choose Account
+                </label>
+                <select id="loginAccountSelect" class="form-select">
+                    <option value="0">🏥 Admin (Sistem Yöneticisi)</option>
+                    <option value="1">🩸 Kızılay (Kan Bankası)</option>
+                    <option value="2">🚚 DHL (Taşıyıcı)</option>
+                    <option value="3">🏨 Hastane</option>
+                    <option value="4">📡 IoT Sensör</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-lock mr-2 text-purple-500"></i>Password
+                </label>
+                <div class="relative">
+                    <input type="password" id="loginPassword" placeholder="Şifrenizi girin" 
+                           class="form-input">
+                    <button id="togglePasswordBtn" type="button" class="password-toggle">
+                        <i id="eyeIcon" class="fas fa-eye text-lg"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="loginError" class="hidden error-message">
+                <i class="fas fa-exclamation-circle"></i>
+                <span id="loginErrorText">Incorrect password!</span>
+            </div>
+            
+            <button id="loginBtn" type="button" class="btn-login">
+                <i class="fas fa-sign-in-alt mr-2"></i>Log In
+            </button>
+        </div>
+        
+        <!-- Demo Passwords -->
+        <div class="demo-passwords">
+            <p class="demo-passwords-title">
+                <i class="fas fa-info-circle text-blue-500"></i>Demo Passwords
+            </p>
+            <div class="grid grid-cols-2 gap-2 text-sm">
+                <div class="demo-password-item">
+                    <span>🏥</span>
+                    <code class="demo-password-code">admin123</code>
+                </div>
+                <div class="demo-password-item">
+                    <span>🩸</span>
+                    <code class="demo-password-code">kizilay123</code>
+                </div>
+                <div class="demo-password-item">
+                    <span>🚚</span>
+                    <code class="demo-password-code">dhl123</code>
+                </div>
+                <div class="demo-password-item">
+                    <span>🏨</span>
+                    <code class="demo-password-code">hospital123</code>
+                </div>
+                <div class="demo-password-item" style="grid-column: span 2; justify-content: center;">
+                    <span>📡</span>
+                    <code class="demo-password-code">iot123</code>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="login-footer">
+            <p>Blood Cold Chain Management System</p>
+            <p class="mt-1">By Yusuf Emre Elmali & Hasan Demiryurek</p>
+        </div>
+    </div>
+
+    <script>
+        // Add event listeners when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Login button click
+            document.getElementById('loginBtn').addEventListener('click', login);
+            
+            // Password toggle button
+            document.getElementById('togglePasswordBtn').addEventListener('click', togglePassword);
+            
+            // Enter key on password field
+            document.getElementById('loginPassword').addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') login();
+            });
+            
+            // Check if already logged in
+            if (authService.isAuthenticated()) {
+                window.location.href = 'index.html';
+            }
+            document.getElementById('loginPassword').focus();
+        });
+
+        // Login function with authentication service
+        async function login() {
+            const accountIndex = parseInt(document.getElementById('loginAccountSelect').value);
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+            const errorText = document.getElementById('loginErrorText');
+            
+            if (!password) {
+                errorText.textContent = 'Lütfen şifre girin!';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+            
+            // Show loading state
+            const loginBtn = document.querySelector('.btn-login');
+            const originalText = loginBtn.innerHTML;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Logging in...';
+            loginBtn.disabled = true;
+            
+            try {
+                // Use authentication service
+                const result = await authService.login(accountIndex, password);
+                
+                if (result.success) {
+                    // Success - redirect to main page
+                    window.location.href = 'index.html';
+                } else {
+                    // Error
+                    errorText.textContent = result.error || 'Hatalı şifre! Lütfen tekrar deneyin.';
+                    errorDiv.classList.remove('hidden');
+                    document.getElementById('loginPassword').value = '';
+                    document.getElementById('loginPassword').focus();
+                    
+                    // Shake animation
+                    const card = document.querySelector('.login-card');
+                    card.style.animation = 'none';
+                    setTimeout(() => {
+                        card.style.animation = 'shake 0.5s ease-in-out';
+                    }, 10);
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                errorText.textContent = 'Bağlantı hatası! Lütfen tekrar deneyin.';
+                errorDiv.classList.remove('hidden');
+            } finally {
+                // Restore button state
+                loginBtn.innerHTML = originalText;
+                loginBtn.disabled = false;
+            }
+        }
+        
+        // Toggle password visibility
+        function togglePassword() {
+            const passwordInput = document.getElementById('loginPassword');
+            const eyeIcon = document.getElementById('eyeIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+            }
+        }
+    </script>
+</body>
+</html>
