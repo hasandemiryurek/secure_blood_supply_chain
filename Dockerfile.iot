@@ -1,0 +1,16 @@
+FROM node:18-alpine
+
+# Create app directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy IoT simulator
+COPY iot-simulator ./iot-simulator
+
+# Wait for backend to be ready before starting
+CMD ["sh", "-c", "sleep 15 && node iot-simulator/simulator.js"]

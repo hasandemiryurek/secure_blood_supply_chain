@@ -30,7 +30,6 @@ const HASHED_PASSWORDS = {
     "4": "$2a$10$xYZ123..."
 };
 
-// Initialize hashed passwords
 async function initPasswords() {
     HASHED_PASSWORDS["0"] = await bcrypt.hash("admin123", SALT_ROUNDS);
     HASHED_PASSWORDS["1"] = await bcrypt.hash("kizilay123", SALT_ROUNDS);
@@ -42,10 +41,9 @@ async function initPasswords() {
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB limit
+        fileSize: 10 * 1024 * 1024, 
     },
     fileFilter: (req, file, cb) => {
-        // Allowed file types
         const allowedTypes = /jpeg|jpg|png|pdf|json|doc|docx/;
         const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
         const mimetype = allowedTypes.test(file.mimetype);
@@ -57,10 +55,9 @@ const upload = multer({
     }
 });
 
-// Rate limiting - disabled for development
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 1000, // High limit for dev
+    max: 1000,
     message: { error: "Too many requests, please try again later." },
     standardHeaders: true,
     legacyHeaders: false
@@ -68,7 +65,7 @@ const apiLimiter = rateLimit({
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100, // High limit for dev
+    max: 100, 
     message: { error: "Too many login attempts, please try again later." },
     skipSuccessfulRequests: true
 });
@@ -76,7 +73,7 @@ const authLimiter = rateLimit({
 // Initialize IPFS service
 const ipfsService = getIPFSService();
 
-// Contract ABI for BloodColdChainV2
+
 const CONTRACT_ABI = [
     // Core functions
     "function register(string calldata id, uint8 bloodType, uint256 expiryDays, string calldata ipfs) external",
@@ -111,8 +108,6 @@ const corsOptions = {
     credentials: true,
     optionsSuccessStatus: 200
 };
-
-// Helmet disabled for development - enable in production with proper CSP
 // app.use(helmet());
 app.use(cors(corsOptions));
 app.use(express.json());
@@ -125,8 +120,6 @@ app.use("/api/", apiLimiter);
 app.get('/', (req, res) => {
     res.redirect('/login.html');
 });
-
-// ============ Authentication Middleware ============
 
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
@@ -180,10 +173,6 @@ async function initializeConnection() {
     }
 }
 
-// API Routes
-
-// ============ Authentication Routes ============
-
 // Login endpoint (rate limiter disabled for development)
 app.post("/api/auth/login", async (req, res) => {
     try {
@@ -225,10 +214,6 @@ app.post("/api/auth/login", async (req, res) => {
 app.get("/api/auth/verify", authenticateToken, (req, res) => {
     res.json({ valid: true, user: req.user });
 });
-
-// ============ Contract Routes ============
-
-// API Routes
 
 // Get contract address
 app.get("/api/contract-address", (req, res) => {
@@ -346,7 +331,7 @@ app.get("/api/bags/:bagId/history", async (req, res) => {
     }
 });
 
-// Register donation (via backend with blood bank signer)
+// Register donation 
 app.post("/api/bags/register", async (req, res) => {
     try {
         if (!contract || !signers.bloodBank) {
@@ -416,7 +401,7 @@ app.post("/api/bags/:bagId/temperature", async (req, res) => {
         const { bagId } = req.params;
         const { temperature } = req.body;
 
-        // Convert to contract format (multiply by 100)
+        // Convert to contract format 
         const tempContract = Math.round(temperature * 100);
 
         const contractWithSigner = contract.connect(signers.iotSensor);
@@ -556,8 +541,6 @@ app.post("/api/demo/spoiled-bag", async (req, res) => {
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "../frontend/index.html"));
 });
-
-// ============ IPFS API Endpoints ============
 
 // Check IPFS configuration status
 app.get("/api/ipfs/status", (req, res) => {

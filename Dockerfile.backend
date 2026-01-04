@@ -1,0 +1,41 @@
+FROM node:18-alpine
+
+# Install curl for healthcheck and IPFS
+RUN apk add --no-cache curl bash
+
+# Install IPFS
+RUN wget https://dist.ipfs.tech/kubo/v0.24.0/kubo_v0.24.0_linux-amd64.tar.gz && \
+    tar -xvzf kubo_v0.24.0_linux-amd64.tar.gz && \
+    cd kubo && \
+    bash install.sh && \
+    rm -rf /kubo*
+
+# Create app directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy backend and frontend
+COPY backend ./backend
+COPY frontend ./frontend
+COPY artifacts ./artifacts
+
+# Initialize IPFS
+RUN ipfs init
+
+# Expose ports
+EXPOSE 3000 5001 8080
+
+# Create startup script
+RUN echo '#!/bin/sh' > /app/start.sh && \
+    echo 'ipfs daemon &' >> /app/start.sh && \
+    echo 'sleep 5' >> /app/start.sh && \
+    echo 'node backend/server.js' >> /app/start.sh && \
+    chmod +x /app/start.sh
+
+# Start IPFS and backend
+CMD ["/app/start.sh"]

@@ -104,6 +104,7 @@ blood-cold-chain/
 ### Prerequisites
 - Node.js 18+
 - npm or yarn
+- Docker Desktop (for containerized setup)
 
 ### Installation
 
@@ -114,6 +115,41 @@ cd blood-cold-chain
 # Install dependencies
 npm install
 ```
+
+### 🐳 Docker Setup (Recommended)
+
+**Easiest way to run the entire system:**
+
+```bash
+# Start all services (Hardhat + Backend + IPFS + IoT)
+docker-compose up
+
+# Run in background
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop all services
+docker-compose down
+```
+
+**What Docker does automatically:**
+- ✅ Starts Hardhat local blockchain (port 8545)
+- ✅ Deploys smart contract automatically
+- ✅ Starts backend server with IPFS (port 3000)
+- ✅ Runs IoT simulator
+- ✅ No manual terminal management needed!
+
+**Access the application:**
+- Frontend: Open `frontend/index.html` in browser
+- Backend API: http://localhost:3000
+- IPFS API: http://localhost:5001
+- Blockchain RPC: http://localhost:8545
+
+---
+
+### 📦 Manual Setup (Without Docker)
 
 ### Compile Smart Contract
 

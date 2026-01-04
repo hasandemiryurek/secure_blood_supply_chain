@@ -27,8 +27,6 @@ const CONTRACT_ABI = [
     "function isSafe(string memory bagId) external view returns (bool safe, string memory reason)",
     "function getParticipant(address addr) external view returns (tuple(string name, uint8 role, bool active, bool exists))"
 ];
-
-
 let provider;
 let signer;
 let contract;
@@ -125,7 +123,6 @@ function switchAccount() {
     alert('Hesap değiştirmek için lütfen çıkış yapıp tekrar giriş yapın.');
 }
 
-// ============ Tab Navigation ============
 function showTab(tabName) {
     $$('.tab-content').forEach(tab => tab.classList.add('hidden'));
     $$('.tab-btn').forEach(btn => btn.classList.remove('active', 'border-purple-600', 'text-purple-600'));
@@ -137,8 +134,6 @@ function showTab(tabName) {
         loadAllBags();
     }
 }
-
-
 
 // Upload to IPFS helper
 async function uploadToIPFS(file, bagId, docType = 'certificate') {
@@ -178,7 +173,6 @@ async function registerDonation() {
     try {
         let ipfsHash = "";
         
-        // Handle IPFS upload if file selected
         if (fileInput?.files.length > 0) {
             uploadStatus.classList.remove('hidden');
             $('ipfsStatusText').textContent = 'Uploading document to IPFS...';
@@ -235,7 +229,6 @@ async function transferOwnership() {
     }
 
     const bagId = $('transBagId').value;
-    // Check dropdown first, then manual input
     const toAddress = $('transToAddress').value || $('transToAddressManual').value;
     const notes = $('transNotes').value;
 
@@ -757,7 +750,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Export functions for dynamic onclick handlers (like viewBagHistory in table)
 window.viewBagHistory = viewBagHistory;
 
-// ============ Automatic Temperature Recording ============
+//Auto Temperature Recording
 let autoTempInterval = null;
 
 function startAutoTemperatureRecording() {

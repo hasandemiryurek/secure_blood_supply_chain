@@ -11,7 +11,8 @@ const path = require("path");
 
 class IPFSService {
     constructor(config = {}) {
-        this.provider = config.provider || "pinata"; // 'pinata', 'infura', 'local', 'nft.storage'
+        this.provider = config.provider || "pinata"; 
+        
         this.config = config;
         
         // Gateway URLs for fetching content

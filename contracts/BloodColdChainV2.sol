@@ -59,12 +59,12 @@ contract BloodColdChainV2 is AccessControl, ReentrancyGuard, Pausable {
     }
     
     modifier onlyHospital() {
-        require(participants[msg.sender].role == BloodChainTypes.Role.HOSPITAL, "Yetkiniz yok: Sadece hastane");
+        require(participants[msg.sender].role == BloodChainTypes.Role.HOSPITAL, "You don't have permission");
         _;
     }
     
     modifier onlyTransporter() {
-        require(participants[msg.sender].role == BloodChainTypes.Role.TRANSPORTER, "Yetkiniz yok: Sadece tasiyici");
+        require(participants[msg.sender].role == BloodChainTypes.Role.TRANSPORTER, "You don't have permission");
         _;
     }
     
@@ -143,7 +143,7 @@ contract BloodColdChainV2 is AccessControl, ReentrancyGuard, Pausable {
     
     function recordTemp(string calldata id, int256 temp) external active exists(id) whenNotPaused {
         BloodChainTypes.Role role = participants[msg.sender].role;
-        require(role == BloodChainTypes.Role.TRANSPORTER, "Yetkiniz yok: Sadece tasiyici");
+        require(role == BloodChainTypes.Role.TRANSPORTER, "You don't have permission");
         require(BloodChainLib.isTempReasonable(temp), "Out of range");
         
         BloodChainTypes.BloodBag storage bag = bags[id];
@@ -155,7 +155,7 @@ contract BloodColdChainV2 is AccessControl, ReentrancyGuard, Pausable {
         if (!safe && bag.status != BloodChainTypes.BagStatus.SPOILED) {
             bag.status = BloodChainTypes.BagStatus.SPOILED;
             emit Spoiled(id, temp);
-            emit Alert("TEMP_BREACH", msg.sender, id);
+            emit Alert("TempBreach", msg.sender, id);
         }
     }
     
@@ -172,7 +172,7 @@ contract BloodColdChainV2 is AccessControl, ReentrancyGuard, Pausable {
     }
     
     function updateIPFS(string calldata id, string calldata hash) external active exists(id) whenNotPaused {
-        require(bags[id].currentOwner == msg.sender, "Yetkiniz yok: Sadece mevcut sahip");
+        require(bags[id].currentOwner == msg.sender, "You don't have permission: Only current owner");
         require(BloodChainLib.validateIPFS(hash), "Invalid IPFS");
         bags[id].ipfsHash = hash;
     }
@@ -214,13 +214,13 @@ contract BloodColdChainV2 is AccessControl, ReentrancyGuard, Pausable {
         return BloodChainLib.statusStr(s);
     }
     
-    function pause() external onlyRole(ADMIN) { _pause(); emit Alert("PAUSED", msg.sender, ""); }
+    function pause() external onlyRole(ADMIN) { _pause(); emit Alert("Paused", msg.sender, ""); }
     function unpause() external onlyRole(ADMIN) { _unpause(); }
     
     function emergencySpoil(string calldata id, string calldata reason) external onlyRole(ADMIN) exists(id) {
         require(bags[id].status != BloodChainTypes.BagStatus.SPOILED, "Already spoiled");
         bags[id].status = BloodChainTypes.BagStatus.SPOILED;
         emit Spoiled(id, 0);
-        emit Alert("EMERGENCY_SPOIL", msg.sender, reason);
+        emit Alert("EmergencySpoil", msg.sender, reason);
     }
 }
