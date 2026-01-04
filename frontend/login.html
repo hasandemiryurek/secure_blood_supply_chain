@@ -12,15 +12,25 @@
 <body class="login-page">
     <!-- Animated Particles -->
     <div class="particles">
-        <div class="particle" style="left: 10%; animation-delay: 0s;"></div>
-        <div class="particle" style="left: 20%; animation-delay: 2s;"></div>
-        <div class="particle" style="left: 30%; animation-delay: 4s;"></div>
-        <div class="particle" style="left: 40%; animation-delay: 1s;"></div>
-        <div class="particle" style="left: 50%; animation-delay: 3s;"></div>
-        <div class="particle" style="left: 60%; animation-delay: 5s;"></div>
-        <div class="particle" style="left: 70%; animation-delay: 2.5s;"></div>
-        <div class="particle" style="left: 80%; animation-delay: 1.5s;"></div>
-        <div class="particle" style="left: 90%; animation-delay: 4.5s;"></div>
+        <div class="particle" style="left: 5%; animation-delay: 0s;"></div>
+        <div class="particle" style="left: 10%; animation-delay: 2s;"></div>
+        <div class="particle" style="left: 15%; animation-delay: 4s;"></div>
+        <div class="particle" style="left: 20%; animation-delay: 1s;"></div>
+        <div class="particle" style="left: 25%; animation-delay: 3s;"></div>
+        <div class="particle" style="left: 30%; animation-delay: 5s;"></div>
+        <div class="particle" style="left: 35%; animation-delay: 2.5s;"></div>
+        <div class="particle" style="left: 40%; animation-delay: 1.5s;"></div>
+        <div class="particle" style="left: 45%; animation-delay: 4.5s;"></div>
+        <div class="particle" style="left: 50%; animation-delay: 0.5s;"></div>
+        <div class="particle" style="left: 55%; animation-delay: 3.5s;"></div>
+        <div class="particle" style="left: 60%; animation-delay: 1.8s;"></div>
+        <div class="particle" style="left: 65%; animation-delay: 4.2s;"></div>
+        <div class="particle" style="left: 70%; animation-delay: 2.2s;"></div>
+        <div class="particle" style="left: 75%; animation-delay: 3.8s;"></div>
+        <div class="particle" style="left: 80%; animation-delay: 0.8s;"></div>
+        <div class="particle" style="left: 85%; animation-delay: 4.8s;"></div>
+        <div class="particle" style="left: 90%; animation-delay: 2.8s;"></div>
+        <div class="particle" style="left: 95%; animation-delay: 1.2s;"></div>
     </div>
 
     <div class="login-card">
@@ -44,18 +54,16 @@
             </div>
         </div>
         
-        <!-- Login Form -->
         <div class="space-y-5">
             <div class="form-group">
                 <label class="form-label">
                     <i class="fas fa-user-circle mr-2 text-purple-500"></i>Choose Account
                 </label>
                 <select id="loginAccountSelect" class="form-select">
-                    <option value="0">🏥 Admin (Sistem Yöneticisi)</option>
-                    <option value="1">🩸 Kızılay (Kan Bankası)</option>
-                    <option value="2">🚚 DHL (Taşıyıcı)</option>
-                    <option value="3">🏨 Hastane</option>
-                    <option value="4">📡 IoT Sensör</option>
+                    <option value="0"> Admin</option>
+                    <option value="1"> Blood Bank</option>
+                    <option value="2"> Transporter</option>
+                    <option value="3"> Hospital</option>
                 </select>
             </div>
             
@@ -64,7 +72,7 @@
                     <i class="fas fa-lock mr-2 text-purple-500"></i>Password
                 </label>
                 <div class="relative">
-                    <input type="password" id="loginPassword" placeholder="Şifrenizi girin" 
+                    <input type="password" id="loginPassword" placeholder="Enter your password" 
                            class="form-input">
                     <button id="togglePasswordBtn" type="button" class="password-toggle">
                         <i id="eyeIcon" class="fas fa-eye text-lg"></i>
@@ -89,24 +97,20 @@
             </p>
             <div class="grid grid-cols-2 gap-2 text-sm">
                 <div class="demo-password-item">
-                    <span>🏥</span>
+                    <span></span>
                     <code class="demo-password-code">admin123</code>
                 </div>
                 <div class="demo-password-item">
-                    <span>🩸</span>
+                    <span></span>
                     <code class="demo-password-code">kizilay123</code>
                 </div>
                 <div class="demo-password-item">
-                    <span>🚚</span>
+                    <span></span>
                     <code class="demo-password-code">dhl123</code>
                 </div>
                 <div class="demo-password-item">
-                    <span>🏨</span>
+                    <span></span>
                     <code class="demo-password-code">hospital123</code>
-                </div>
-                <div class="demo-password-item" style="grid-column: span 2; justify-content: center;">
-                    <span>📡</span>
-                    <code class="demo-password-code">iot123</code>
                 </div>
             </div>
         </div>

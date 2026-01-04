@@ -24,11 +24,10 @@
                 </div>
                 <div class="flex items-center space-x-4">
                     <select id="accountSelector" disabled class="bg-gray-300 text-gray-600 px-3 py-2 rounded-lg font-medium text-sm cursor-not-allowed">
-                        <option value="0">🏥 Admin (Blood Bank)</option>
-                        <option value="1">🩸 Kızılay (Blood Bank)</option>
-                        <option value="2">🚚 DHL (Transporter)</option>
-                        <option value="3">🏨 Hospital</option>
-                        <option value="4">📡 IoT Sensor</option>
+                        <option value="0"> Admin </option>
+                        <option value="1"> Blood Bank </option>
+                        <option value="2"> Transporter</option>
+                        <option value="3"> Hospital</option>
                     </select>
                     <div id="connectionStatus" class="flex items-center space-x-2">
                         <span id="statusDot" class="w-3 h-3 bg-red-500 rounded-full pulse-animation"></span>
@@ -204,15 +203,13 @@
                             <select id="transToAddress" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
                                 <option value="">Select recipient...</option>
                             </select>
-                            <p class="text-gray-500 text-xs mt-1">Or enter address manually below:</p>
-                            <input type="text" id="transToAddressManual" placeholder="0x... (optional manual entry)" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent mt-2">
                         </div>
                         <div class="md:col-span-2">
                             <label class="block text-gray-700 font-medium mb-2">Transfer Notes</label>
                             <textarea id="transNotes" placeholder="Enter transfer notes..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" rows="3"></textarea>
                         </div>
                     </div>
-                    <button id="transferOwnershipBtn" class="mt-6 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+                    <button id="transferOwnershipBtn" class="mt-6 bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition">
                         <i class="fas fa-paper-plane mr-2"></i>Transfer Ownership
                     </button>
                 </div>
@@ -241,8 +238,8 @@
                             <input type="number" id="tempValue" step="0.01" placeholder="e.g., 4.5" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
                         </div>
                         <div class="md:col-span-2">
-                            <button id="recordTemperatureBtn" class="w-full bg-orange-600 text-white px-6 py-4 rounded-lg font-semibold hover:bg-orange-700 transition text-lg">
-                                <i class="fas fa-thermometer-half mr-2"></i>🌡️ SICAKLIK KAYDET
+                            <button id="recordTemperatureBtn" class="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition">
+                                <i class="fas fa-thermometer-half mr-2"></i>Record Temperature
                             </button>
                         </div>
                     </div>
@@ -335,7 +332,7 @@
                                 <input type="file" id="ipfsDocFile" class="w-full px-4 py-3 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500" accept=".pdf,.jpg,.jpeg,.png,.json,.doc,.docx">
                             </div>
                         </div>
-                        <button id="uploadIPFSDocumentBtn" class="mt-4 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+                        <button id="uploadIPFSDocumentBtn" class="mt-4 bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition">
                             <i class="fas fa-cloud-upload-alt mr-2"></i>Upload & Record on Blockchain
                         </button>
                         <div id="ipfsUploadResult" class="mt-4 hidden"></div>

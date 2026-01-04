@@ -3,17 +3,15 @@
  * Modular and optimized version
  */
 
-// ============ Constants ============
 const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const STATUS_CLASSES = ["status-registered", "status-in-transit", "status-delivered", "status-spoiled"];
 const STATUS_NAMES = ["Registered", "In Transit", "Delivered", "Spoiled"];
 
 const ACCOUNT_ROLES = [
-    { name: "Admin (Blood Bank)", icon: "🏥", color: "bg-purple-600" },
-    { name: "Kızılay (Blood Bank)", icon: "🩸", color: "bg-red-500" },
-    { name: "DHL (Transporter)", icon: "🚚", color: "bg-yellow-600" },
-    { name: "Hospital", icon: "🏨", color: "bg-green-600" },
-    { name: "IoT Sensor", icon: "📡", color: "bg-blue-600" }
+    { name: "Admin ", icon: "", color: "bg-purple-600" },
+    { name: "Blood Bank", icon: "", color: "bg-red-500" },
+    { name: "Transporter", icon: "", color: "bg-yellow-600" },
+    { name: "Hospital", icon: "", color: "bg-green-600" }
 ];
 
 const CONTRACT_ABI = [
@@ -30,18 +28,18 @@ const CONTRACT_ABI = [
     "function getParticipant(address addr) external view returns (tuple(string name, uint8 role, bool active, bool exists))"
 ];
 
-// ============ State ============
+
 let provider;
 let signer;
 let contract;
 let contractAddress = "";
 let currentAccountIndex = 0;
 
-// ============ DOM Helpers ============
+
 const $ = (id) => document.getElementById(id);
 const $$ = (selector) => document.querySelectorAll(selector);
 
-// ============ Authentication ============
+
 function logout() {
     // Clear all auth data
     sessionStorage.removeItem('isLoggedIn');
@@ -62,7 +60,7 @@ function checkLogin() {
     return true;
 }
 
-// ============ Initialization ============
+
 async function init() {
     if (!checkLogin()) return;
     
@@ -84,7 +82,7 @@ async function init() {
     await loadParticipants();
 }
 
-// ============ Wallet Connection ============
+
 async function connectWallet() {
     try {
         provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545");
@@ -104,17 +102,18 @@ async function connectWallet() {
         $('statusText').textContent = `${role.icon} ${address.slice(0, 6)}...${address.slice(-4)}`;
         $('connectBtn').textContent = 'Connected';
         
-        // Update role banner
-        const banner = $('roleBanner');
-        const roleInfo = $('roleInfo');
-        banner.className = `${role.color} text-white py-2 px-4 text-center text-sm`;
-        roleInfo.textContent = `${role.icon} Active Role: ${role.name} | Address: ${address}`;
-        banner.classList.remove('hidden');
+        // Role banner hidden - removed from UI
+        // const banner = $('roleBanner');
+        // const roleInfo = $('roleInfo');
+        // banner.className = `${role.color} text-white py-2 px-4 text-center text-sm`;
+        // roleInfo.textContent = `${role.icon} Active Role: ${role.name} | Address: ${address}`;
+        // banner.classList.remove('hidden');
 
         logTransaction('success', `Connected: ${role.icon} ${role.name}`);
         
         if (contract) {
             await loadStats();
+            startAutoTemperatureRecording(); // Start automatic temperature recording
         }
     } catch (error) {
         console.error(error);
@@ -139,7 +138,7 @@ function showTab(tabName) {
     }
 }
 
-// ============ Core Functions ============
+
 
 // Upload to IPFS helper
 async function uploadToIPFS(file, bagId, docType = 'certificate') {
@@ -253,7 +252,6 @@ async function transferOwnership() {
         
         $('transBagId').value = '';
         $('transToAddress').value = '';
-        $('transToAddressManual').value = '';
         $('transNotes').value = '';
         await loadStats();
     } catch (error) {
@@ -274,17 +272,16 @@ async function loadParticipants() {
         dropdown.innerHTML = '<option value="">Select recipient...</option>';
         
         const participants = [
-            { name: '🩸 Kızılay (Blood Bank)', address: accounts.bloodBank },
-            { name: '🚚 DHL (Transporter)', address: accounts.transporter },
-            { name: '🏨 Hospital', address: accounts.hospital },
-            { name: '📡 IoT Sensor', address: accounts.iotSensor }
+            { name: 'Blood Bank', address: accounts.bloodBank },
+            { name: 'Transporter', address: accounts.transporter },
+            { name: 'Hospital', address: accounts.hospital }
         ];
         
         for (const p of participants) {
             if (p.address) {
                 const option = document.createElement('option');
                 option.value = p.address;
-                option.textContent = `${p.name} - ${p.address.slice(0, 8)}...${p.address.slice(-4)}`;
+                option.textContent = p.name;
                 dropdown.appendChild(option);
             }
         }
@@ -406,10 +403,13 @@ function renderBagHistory(bag, temps, transfers, isSafe, reason) {
                 <div class="space-y-2 max-h-64 overflow-y-auto">
                     ${transfers.map(t => `
                         <div class="py-2 border-b">
-                            <div class="flex items-center text-sm">
-                                <span class="text-gray-500">${t.from === '0x0000000000000000000000000000000000000000' ? 'Initial' : t.from.slice(0, 8) + '...'}</span>
-                                <i class="fas fa-arrow-right mx-2 text-gray-400"></i>
-                                <span class="font-semibold">${t.to.slice(0, 8)}...</span>
+                            <div class="text-sm mb-1">
+                                <span class="text-gray-500">From: </span>
+                                <code class="text-xs bg-gray-100 px-2 py-1 rounded">${t.from === '0x0000000000000000000000000000000000000000' ? 'Initial Registration' : t.from}</code>
+                            </div>
+                            <div class="text-sm mb-1">
+                                <span class="text-gray-500">To: </span>
+                                <code class="text-xs bg-gray-100 px-2 py-1 rounded font-semibold">${t.to}</code>
                             </div>
                             <p class="text-gray-500 text-xs mt-1">${t.notes} - ${new Date(Number(t.timestamp) * 1000).toLocaleString()}</p>
                         </div>
@@ -520,6 +520,12 @@ function renderLogEntry(log, type, message, timestamp) {
 
     if (log.querySelector('p.text-gray-500')) {
         log.innerHTML = '';
+    }
+
+    // Remove previous pending message if exists
+    const existingPending = log.querySelector('.bg-yellow-50');
+    if (existingPending && (type === 'success' || type === 'error')) {
+        existingPending.remove();
     }
 
     const entry = document.createElement('div');
@@ -750,3 +756,90 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Export functions for dynamic onclick handlers (like viewBagHistory in table)
 window.viewBagHistory = viewBagHistory;
+
+// ============ Automatic Temperature Recording ============
+let autoTempInterval = null;
+
+function startAutoTemperatureRecording() {
+    // Clear any existing interval
+    if (autoTempInterval) {
+        clearInterval(autoTempInterval);
+    }
+    
+    console.log('🌡️  Auto Temperature Recording: ENABLED (every 60 seconds)');
+    
+    // Run immediately first time
+    recordAutoTemperature();
+    
+    // Then run every 60 seconds
+    autoTempInterval = setInterval(recordAutoTemperature, 10000);
+}
+
+async function recordAutoTemperature() {
+    if (!contract) return;
+    
+    try {
+        // Get all bags
+        const allBagIds = await contract.getAllBags();
+        if (allBagIds.length === 0) return;
+        
+        // Filter IN_TRANSIT bags
+        const inTransitBags = [];
+        for (const bagId of allBagIds) {
+            const bag = await contract.getBag(bagId);
+            if (bag.status === 1n) { // IN_TRANSIT
+                inTransitBags.push(bagId);
+            }
+        }
+        
+        if (inTransitBags.length === 0) {
+            console.log('🌡️  Auto Temp: No bags in transit');
+            return;
+        }
+        
+        // Use Transporter account for recording
+        const transporterProvider = new ethers.JsonRpcProvider("http://127.0.0.1:8545");
+        const transporterSigner = await transporterProvider.getSigner(2);
+        const transporterContract = new ethers.Contract(contractAddress, CONTRACT_ABI, transporterSigner);
+        
+        // Generate random temperature with different scenarios
+        let temp;
+        const random = Math.random();
+        
+        if (random < 0.70) {
+            // 70% normal (2-6°C)
+            temp = 2 + Math.random() * 4;
+        } else if (random < 0.85) {
+            // 15% cold breach (below 2°C)
+            temp = -2 + Math.random() * 3;
+        } else {
+            // 15% hot breach (above 6°C)
+            temp = 7 + Math.random() * 8;
+        }
+        
+        const tempInt = Math.floor(temp * 100);
+        
+        // Record for a random bag from in-transit bags
+        const randomBag = inTransitBags[Math.floor(Math.random() * inTransitBags.length)];
+        
+        const tx = await transporterContract.recordTemp(randomBag, tempInt);
+        await tx.wait();
+        
+        const status = (temp >= 2 && temp <= 6) ? '✅' : '⚠️';
+        console.log(`🌡️  Auto Temp: ${temp.toFixed(2)}°C ${status} recorded for ${randomBag}`);
+        logTransaction('info', `🌡️ Auto: ${temp.toFixed(2)}°C ${status} → ${randomBag}`);
+        
+        // Refresh stats
+        await loadStats();
+        
+    } catch (error) {
+        console.error('Auto temperature recording error:', error);
+    }
+}
+
+// Stop auto recording on page unload
+window.addEventListener('beforeunload', () => {
+    if (autoTempInterval) {
+        clearInterval(autoTempInterval);
+    }
+});

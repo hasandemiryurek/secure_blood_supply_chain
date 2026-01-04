@@ -20,7 +20,6 @@ contract BloodColdChainV2 is AccessControl, ReentrancyGuard, Pausable {
     bytes32 public constant BLOOD_BANK = keccak256("BLOOD_BANK");
     bytes32 public constant TRANSPORTER = keccak256("TRANSPORTER");
     bytes32 public constant HOSPITAL = keccak256("HOSPITAL");
-    bytes32 public constant IOT_SENSOR = keccak256("IOT_SENSOR");
     
     mapping(string => BloodChainTypes.BloodBag) public bags;
     mapping(string => BloodChainTypes.TempRecord[]) public temps;
@@ -69,11 +68,6 @@ contract BloodColdChainV2 is AccessControl, ReentrancyGuard, Pausable {
         _;
     }
     
-    modifier onlyIoTSensor() {
-        require(participants[msg.sender].role == BloodChainTypes.Role.IOT_SENSOR, "Yetkiniz yok: Sadece IoT sensor");
-        _;
-    }
-    
     constructor() {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(ADMIN, msg.sender);
@@ -92,7 +86,7 @@ contract BloodColdChainV2 is AccessControl, ReentrancyGuard, Pausable {
         participantList.push(addr);
         
         // Grant role
-        bytes32[4] memory roles = [BLOOD_BANK, TRANSPORTER, HOSPITAL, IOT_SENSOR];
+        bytes32[3] memory roles = [BLOOD_BANK, TRANSPORTER, HOSPITAL];
         _grantRole(roles[uint8(role)], addr);
         
         emit ParticipantAdded(addr, name, role);
@@ -149,7 +143,7 @@ contract BloodColdChainV2 is AccessControl, ReentrancyGuard, Pausable {
     
     function recordTemp(string calldata id, int256 temp) external active exists(id) whenNotPaused {
         BloodChainTypes.Role role = participants[msg.sender].role;
-        require(role == BloodChainTypes.Role.IOT_SENSOR || role == BloodChainTypes.Role.TRANSPORTER, "Yetkiniz yok: Sadece IoT sensor veya tasiyici");
+        require(role == BloodChainTypes.Role.TRANSPORTER, "Yetkiniz yok: Sadece tasiyici");
         require(BloodChainLib.isTempReasonable(temp), "Out of range");
         
         BloodChainTypes.BloodBag storage bag = bags[id];

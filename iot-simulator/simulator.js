@@ -45,16 +45,16 @@ class IoTSimulator {
 
         this.provider = new ethers.JsonRpcProvider(RPC_URL);
         
-        // Get the 5th account (index 4) which is the IoT sensor
+        // Use Transporter account (index 2) for temperature recording
         const accounts = await this.provider.listAccounts();
-        if (accounts.length < 5) {
+        if (accounts.length < 3) {
             console.error("❌ Not enough accounts. Please start Hardhat node first.");
             process.exit(1);
         }
         
-        this.signer = await this.provider.getSigner(4); // IoT Sensor account
+        this.signer = await this.provider.getSigner(2); // Transporter account
         const address = await this.signer.getAddress();
-        console.log(`🔑 IoT Sensor Address: ${address}`);
+        console.log(`🔑 Transporter Address: ${address}`);
 
         if (!CONTRACT_ADDRESS) {
             console.error("❌ CONTRACT_ADDRESS not set in .env file");

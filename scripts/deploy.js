@@ -6,7 +6,7 @@ async function main() {
     console.log("🚀 Deploying BloodColdChainV2 contract...\n");
 
     // Get deployer account
-    const [deployer, bloodBank, transporter, hospital, iotSensor] = await hre.ethers.getSigners();
+    const [deployer, bloodBank, transporter, hospital] = await hre.ethers.getSigners();
     
     console.log("📋 Deployment Account:", deployer.address);
     console.log("💰 Account Balance:", hre.ethers.formatEther(await hre.ethers.provider.getBalance(deployer.address)), "ETH\n");
@@ -47,14 +47,6 @@ async function main() {
     );
     console.log("🏨 Hospital:", hospital.address);
 
-    // Register IoT Sensor
-    await bloodColdChain.addParticipant(
-        iotSensor.address,
-        "IoT Temperature Sensor #1",
-        3 // Role.IOT_SENSOR
-    );
-    console.log("📡 IoT Sensor:", iotSensor.address);
-
     console.log("\n" + "=".repeat(60));
     console.log("📝 DEPLOYMENT SUMMARY");
     console.log("=".repeat(60));
@@ -78,8 +70,7 @@ async function main() {
         'ADMIN_ADDRESS': deployer.address,
         'BLOOD_BANK_ADDRESS': bloodBank.address,
         'TRANSPORTER_ADDRESS': transporter.address,
-        'HOSPITAL_ADDRESS': hospital.address,
-        'IOT_SENSOR_ADDRESS': iotSensor.address
+        'HOSPITAL_ADDRESS': hospital.address
     };
     
     for (const [key, value] of Object.entries(envUpdates)) {
@@ -99,8 +90,7 @@ async function main() {
         deployer: deployer.address,
         bloodBank: bloodBank.address,
         transporter: transporter.address,
-        hospital: hospital.address,
-        iotSensor: iotSensor.address
+        hospital: hospital.address
     };
 }
 

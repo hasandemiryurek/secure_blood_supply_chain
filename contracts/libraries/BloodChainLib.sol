@@ -8,7 +8,7 @@ pragma solidity ^0.8.20;
 library BloodChainTypes {
     enum BloodType { A_POS, A_NEG, B_POS, B_NEG, AB_POS, AB_NEG, O_POS, O_NEG }
     enum BagStatus { REGISTERED, IN_TRANSIT, DELIVERED, SPOILED }
-    enum Role { BLOOD_BANK, TRANSPORTER, HOSPITAL, IOT_SENSOR }
+    enum Role { BLOOD_BANK, TRANSPORTER, HOSPITAL }
     
     struct BloodBag {
         string bagId;

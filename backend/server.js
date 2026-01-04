@@ -36,7 +36,6 @@ async function initPasswords() {
     HASHED_PASSWORDS["1"] = await bcrypt.hash("kizilay123", SALT_ROUNDS);
     HASHED_PASSWORDS["2"] = await bcrypt.hash("dhl123", SALT_ROUNDS);
     HASHED_PASSWORDS["3"] = await bcrypt.hash("hospital123", SALT_ROUNDS);
-    HASHED_PASSWORDS["4"] = await bcrypt.hash("iot123", SALT_ROUNDS);
 }
 
 // Configure multer for file uploads
