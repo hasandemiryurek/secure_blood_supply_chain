@@ -13,28 +13,24 @@ const rateLimit = require("express-rate-limit");
 const helmet = require("helmet");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-require("dotenv").config();
+require("dotenv").config({ path: path.join(__dirname, "../.env") }); // Load .env from root directory
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const RPC_URL = process.env.RPC_URL || "http://127.0.0.1:8545";
 const JWT_SECRET = process.env.JWT_SECRET || "blood-chain-secret-key-change-in-production";
 const SALT_ROUNDS = 10;
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 // Hashed passwords (in production, store in database)
-const HASHED_PASSWORDS = {
-    "0": "$2a$10$xYZ123...", // Will be set below
-    "1": "$2a$10$xYZ123...",
-    "2": "$2a$10$xYZ123...",
-    "3": "$2a$10$xYZ123...",
-    "4": "$2a$10$xYZ123..."
-};
+const HASHED_PASSWORDS = {};
 
 async function initPasswords() {
-    HASHED_PASSWORDS["0"] = await bcrypt.hash("admin123", SALT_ROUNDS);
-    HASHED_PASSWORDS["1"] = await bcrypt.hash("kizilay123", SALT_ROUNDS);
-    HASHED_PASSWORDS["2"] = await bcrypt.hash("dhl123", SALT_ROUNDS);
-    HASHED_PASSWORDS["3"] = await bcrypt.hash("hospital123", SALT_ROUNDS);
+    // Load passwords from environment variables (more secure than hardcoding)
+    HASHED_PASSWORDS["0"] = await bcrypt.hash(process.env.PASSWORD_ADMIN || "admin123", SALT_ROUNDS);
+    HASHED_PASSWORDS["1"] = await bcrypt.hash(process.env.PASSWORD_BLOOD_BANK || "kizilay123", SALT_ROUNDS);
+    HASHED_PASSWORDS["2"] = await bcrypt.hash(process.env.PASSWORD_TRANSPORTER || "dhl123", SALT_ROUNDS);
+    HASHED_PASSWORDS["3"] = await bcrypt.hash(process.env.PASSWORD_HOSPITAL || "hospital123", SALT_ROUNDS);
 }
 
 // Configure multer for file uploads
@@ -57,7 +53,7 @@ const upload = multer({
 
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 1000,
+    max: IS_PRODUCTION ? 100 : 1000, // Stricter in production
     message: { error: "Too many requests, please try again later." },
     standardHeaders: true,
     legacyHeaders: false
@@ -104,11 +100,13 @@ const CONTRACT_ABI = [
 
 // Middleware
 const corsOptions = {
-    origin: true, // Allow all origins in development
+    origin: IS_PRODUCTION ? ['http://localhost:3000'] : true, // Restrict in production
     credentials: true,
     optionsSuccessStatus: 200
 };
-// app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: false // Disable for frontend compatibility
+}));
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "../frontend")));
@@ -206,7 +204,8 @@ app.post("/api/auth/login", async (req, res) => {
             expiresIn: '24h'
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Login error:', error);
+        res.status(500).json({ error: "Internal server error" });
     }
 });
 
@@ -233,7 +232,8 @@ app.get("/api/accounts", async (req, res) => {
         };
         res.json(result);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Get accounts error:', error);
+        res.status(500).json({ error: "Failed to fetch accounts" });
     }
 });
 
@@ -264,7 +264,8 @@ app.get("/api/bags", async (req, res) => {
 
         res.json(bags);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Get bags error:', error);
+        res.status(500).json({ error: "Failed to fetch blood bags" });
     }
 });
 

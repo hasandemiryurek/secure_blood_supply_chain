@@ -8,12 +8,17 @@ const axios = require("axios");
 const FormData = require("form-data");
 const fs = require("fs");
 const path = require("path");
+const CryptoJS = require("crypto-js");
+const crypto = require("crypto");
 
 class IPFSService {
     constructor(config = {}) {
         this.provider = config.provider || "pinata"; 
         
         this.config = config;
+        
+        // Encryption key (in production, use environment variable)
+        this.encryptionKey = process.env.IPFS_ENCRYPTION_KEY || "blood-chain-default-encryption-key-change-in-production";
         
         // Gateway URLs for fetching content
         this.gateways = {
@@ -26,25 +31,88 @@ class IPFSService {
     }
 
     /**
-     * Upload a file to IPFS
+     * Encrypt file content using AES-256
+     * @param {Buffer} fileContent - File buffer to encrypt
+     * @returns {Buffer} Encrypted buffer
+     */
+    encryptFile(fileContent) {
+        const encrypted = CryptoJS.AES.encrypt(
+            fileContent.toString('base64'),
+            this.encryptionKey
+        ).toString();
+        return Buffer.from(encrypted);
+    }
+
+    /**
+     * Decrypt file content
+     * @param {Buffer} encryptedContent - Encrypted buffer
+     * @returns {Buffer} Decrypted buffer
+     */
+    decryptFile(encryptedContent) {
+        const decrypted = CryptoJS.AES.decrypt(
+            encryptedContent.toString(),
+            this.encryptionKey
+        );
+        const base64String = decrypted.toString(CryptoJS.enc.Utf8);
+        return Buffer.from(base64String, 'base64');
+    }
+
+    /**
+     * Upload a file to IPFS (with optional encryption)
      * @param {Buffer|string} fileContent - File content as buffer or file path
      * @param {string} fileName - Name of the file
      * @param {Object} metadata - Optional metadata for the file
-     * @returns {Promise<{hash: string, url: string}>}
+     * @param {boolean} encrypt - Whether to encrypt the file (default: true)
+     * @returns {Promise<{hash: string, url: string, encrypted: boolean}>}
      */
-    async uploadFile(fileContent, fileName, metadata = {}) {
+    async uploadFile(fileContent, fileName, metadata = {}, encrypt = true) {
+        // Encrypt file if requested
+        if (encrypt && Buffer.isBuffer(fileContent)) {
+            console.log(`🔒 Encrypting file: ${fileName}`);
+            fileContent = this.encryptFile(fileContent);
+            fileName = fileName + '.encrypted';
+        }
+
+        let result;
         switch (this.provider) {
             case "pinata":
-                return this.uploadToPinata(fileContent, fileName, metadata);
+                result = await this.uploadToPinata(fileContent, fileName, metadata);
+                break;
             case "infura":
-                return this.uploadToInfura(fileContent, fileName);
+                result = await this.uploadToInfura(fileContent, fileName);
+                break;
             case "nft.storage":
-                return this.uploadToNFTStorage(fileContent, fileName, metadata);
+                result = await this.uploadToNFTStorage(fileContent, fileName, metadata);
+                break;
             case "local":
-                return this.uploadToLocal(fileContent, fileName);
+                result = await this.uploadToLocal(fileContent, fileName);
+                break;
             default:
                 throw new Error(`Unknown IPFS provider: ${this.provider}`);
         }
+
+        return {
+            ...result,
+            encrypted: encrypt
+        };
+    }
+
+    /**
+     * Get and decrypt file from IPFS
+     * @param {string} hash - IPFS hash
+     * @param {string} gateway - Gateway to use
+     * @param {boolean} encrypted - Whether file is encrypted
+     * @returns {Promise<Buffer>} Decrypted file content
+     */
+    async getFile(hash, gateway = "cloudflare", encrypted = true) {
+        const content = await this.getContent(hash, gateway);
+        
+        if (encrypted) {
+            console.log(`🔓 Decrypting file from IPFS: ${hash}`);
+            return this.decryptFile(content);
+        }
+        
+        return content;
     }
 
     /**
