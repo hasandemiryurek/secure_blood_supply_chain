@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blood Cold Chain - Blockchain Management System</title>
     <script src="https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
@@ -51,7 +50,6 @@
 
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto px-4 py-8">
-        <!-- Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div class="bg-white rounded-xl shadow-md p-6 card-hover transition">
                 <div class="flex items-center justify-between">
@@ -252,7 +250,7 @@
                     </h2>
                     <div class="flex gap-4 mb-6">
                         <input type="text" id="historyBagId" placeholder="Enter Bag ID" class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                        <button id="getBagHistoryBtn" class="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition">
+                        <button id="getBagHistoryBtn" class="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition">
                             <i class="fas fa-search mr-2"></i>Search
                         </button>
                     </div>
@@ -265,9 +263,14 @@
                         <h2 class="text-xl font-bold text-gray-800">
                             <i class="fas fa-list text-purple-500 mr-2"></i>All Blood Bags
                         </h2>
-                        <button id="loadAllBagsBtn" class="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition">
-                            <i class="fas fa-sync-alt mr-2"></i>Refresh
-                        </button>
+                        <div class="flex gap-2">
+                            <button id="exportBagsBtn" class="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition">
+                                <i class="fas fa-file-csv mr-2"></i>Export CSV
+                            </button>
+                            <button id="loadAllBagsBtn" class="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition">
+                                <i class="fas fa-sync-alt mr-2"></i>Refresh
+                            </button>
+                        </div>
                     </div>
                     <div id="bagsTable" class="overflow-x-auto">
                         <table class="w-full">
@@ -278,6 +281,7 @@
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Current Owner</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">IPFS</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">QR Code</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                                 </tr>
                             </thead>
@@ -338,7 +342,7 @@
                         <div id="ipfsUploadResult" class="mt-4 hidden"></div>
                     </div>
 
-                    <!-- View Documents Section -->
+                    <!--// View Documents Section -->
                     <div class="bg-white border border-gray-200 rounded-lg p-6">
                         <h3 class="text-lg font-semibold text-gray-800 mb-4">
                             <i class="fas fa-folder-open mr-2"></i>View Bag Documents
@@ -372,7 +376,6 @@
             </div>
         </div>
 
-        <!-- Transaction Log -->
         <div class="bg-white rounded-xl shadow-md p-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-gray-800">
@@ -388,7 +391,6 @@
         </div>
     </div>
 
-    <!-- Footer -->
     <footer class="bg-gray-800 text-white py-6 mt-12">
         <div class="max-w-7xl mx-auto px-4 text-center">
             <p class="text-gray-400">Blood Cold Chain Management System</p>
@@ -396,7 +398,10 @@
         </div>
     </footer>
 
-    <!-- Scripts - Modular approach -->
+    <script>
+        window.QRCode = window.QRCode || null;
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs2@0.0.2/qrcode.min.js"></script>
     <script src="auth.js"></script>
     <script src="utils.js"></script>
     <script src="app.js"></script>

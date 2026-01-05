@@ -1,8 +1,3 @@
-/**
- * Authentication Utility for Blood Cold Chain
- * Handles JWT token management and authentication
- */
-
 const AUTH_API_URL = 'http://localhost:3000/api/auth';
 
 class AuthService {

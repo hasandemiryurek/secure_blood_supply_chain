@@ -1,23 +1,18 @@
-/**
- * IoT Temperature Sensor Simulator
- * Simulates autonomous temperature readings for blood bags
- */
-
 const { ethers } = require("ethers");
 require("dotenv").config();
 
-// Configuration
-const RPC_URL = process.env.RPC_URL || "http://127.0.0.1:8545";
+// Configuration - Docker-compatible defaults
+const RPC_URL = process.env.RPC_URL || (process.env.DOCKER_ENV ? "http://hardhat:8545" : "http://127.0.0.1:8545");
 const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS;
-const IOT_INTERVAL = parseInt(process.env.IOT_INTERVAL) || 10000; // 10 seconds default
+const IOT_INTERVAL = parseInt(process.env.IOT_INTERVAL) || 45000; 
 
-// Contract ABI (only the functions we need)
+// Contract ABI 
 const CONTRACT_ABI = [
     "function recordTemp(string memory bagId, int256 temp) external",
     "function getAllBags() external view returns (string[] memory)",
     "function getBag(string memory bagId) external view returns (tuple(string bagId, address owner, uint40 donationDate, uint40 expiryDate, uint8 bloodType, uint8 status, bool exists, string ipfsHash))",
-    "event TempRecorded(string indexed bagId, int256 temp, bool inRange, address indexed recorder, uint256 timestamp)",
-    "event Spoiled(string indexed bagId, int256 lastTemp, uint256 timestamp)"
+    "event TempRecorded(string indexed bagId, int256 temp, bool safe, address indexed by)",
+    "event Spoiled(string indexed bagId, int256 temp)"
 ];
 
 // Status enum
@@ -34,7 +29,7 @@ class IoTSimulator {
         this.signer = null;
         this.contract = null;
         this.isRunning = false;
-        this.simulationMode = "normal"; // normal, cold_breach, hot_breach, random
+        this.simulationMode = "normal"; 
         this.targetBagId = null;
     }
 
@@ -45,19 +40,19 @@ class IoTSimulator {
 
         this.provider = new ethers.JsonRpcProvider(RPC_URL);
         
-        // Use Transporter account (index 2) for temperature recording
+        // Use Transporter account for temperature recording
         const accounts = await this.provider.listAccounts();
         if (accounts.length < 3) {
-            console.error("❌ Not enough accounts. Please start Hardhat node first.");
+            console.error(" Not enough accounts. Please start Hardhat node first.");
             process.exit(1);
         }
         
-        this.signer = await this.provider.getSigner(2); // Transporter account
+        this.signer = await this.provider.getSigner(2); 
         const address = await this.signer.getAddress();
         console.log(`🔑 Transporter Address: ${address}`);
 
         if (!CONTRACT_ADDRESS) {
-            console.error("❌ CONTRACT_ADDRESS not set in .env file");
+            console.error(" CONTRACT_ADDRESS not set in .env file");
             console.log("   Please deploy the contract first and update .env");
             process.exit(1);
         }
@@ -67,20 +62,19 @@ class IoTSimulator {
         console.log("=".repeat(50));
         console.log("");
 
-        // Listen for events
         this.setupEventListeners();
     }
 
     setupEventListeners() {
-        this.contract.on("TemperatureRecorded", (bagId, temperature, isWithinRange, recordedBy, timestamp) => {
+        this.contract.on("TempRecorded", (bagId, temperature, safe, by) => {
             const temp = Number(temperature) / 100;
-            const status = isWithinRange ? "✅ SAFE" : "⚠️ BREACH";
+            const status = safe ? "✅ SAFE" : "⚠️ BREACH";
             console.log(`   📊 Event: Temperature ${temp}°C recorded - ${status}`);
         });
 
-        this.contract.on("BagSpoiled", (bagId, lastTemperature, timestamp) => {
+        this.contract.on("Spoiled", (bagId, lastTemperature) => {
             const temp = Number(lastTemperature) / 100;
-            console.log(`   🚨 Event: BAG SPOILED! Last temp: ${temp}°C`);
+            console.log(`    Event: BAG SPOILED! Last temp: ${temp}°C`);
         });
     }
 
@@ -115,7 +109,7 @@ class IoTSimulator {
                 return 4 + this.failureProgress;
             
             default:
-                return 4; // Default safe temperature
+                return 4; 
         }
     }
 
@@ -165,7 +159,7 @@ class IoTSimulator {
 
     async runSimulation() {
         this.isRunning = true;
-        console.log("🚀 Starting IoT Simulation...");
+        console.log("   Starting IoT Simulation...");
         console.log(`   Mode: ${this.simulationMode}`);
         console.log(`   Interval: ${IOT_INTERVAL}ms`);
         console.log("   Press Ctrl+C to stop\n");

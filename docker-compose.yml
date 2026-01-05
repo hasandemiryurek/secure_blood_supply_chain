@@ -1,7 +1,5 @@
-version: '3.8'
-
 services:
-  # Hardhat Node - Local Blockchain
+  # Hardhat Node -
   hardhat:
     build:
       context: .
@@ -15,12 +13,13 @@ services:
       - ./artifacts:/app/artifacts
       - ./cache:/app/cache
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:8545', (res) => process.exit(res.statusCode === 200 ? 0 : 1))"]
-      interval: 10s
+      test: ["CMD", "curl", "-f", "http://localhost:8545"]
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 30
+      start_period: 10s
 
-  # Backend Server (Express + IPFS)
+  # Backend Server 
   backend:
     build:
       context: .
@@ -28,8 +27,8 @@ services:
     container_name: blood-chain-backend
     ports:
       - "3000:3000"
-      - "5001:5001"  # IPFS API
-      - "8080:8080"  # IPFS Gateway
+    env_file:
+      - .env
     environment:
       - PORT=3000
       - RPC_URL=http://hardhat:8545
@@ -40,15 +39,9 @@ services:
       - ./backend:/app/backend
       - ./frontend:/app/frontend
       - ./artifacts:/app/artifacts
-      - ipfs-data:/data/ipfs
     depends_on:
       hardhat:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   # IoT Simulator
   iot-simulator:
@@ -58,18 +51,14 @@ services:
     container_name: blood-chain-iot
     environment:
       - BACKEND_URL=http://backend:3000
+      - RPC_URL=http://hardhat:8545
+      - DOCKER_ENV=true
     networks:
       - blood-chain-network
-    volumes:
-      - ./iot-simulator:/app/iot-simulator
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend
     restart: unless-stopped
 
 networks:
   blood-chain-network:
     driver: bridge
-
-volumes:
-  ipfs-data:

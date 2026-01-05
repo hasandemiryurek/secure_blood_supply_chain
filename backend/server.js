@@ -13,7 +13,13 @@ const rateLimit = require("express-rate-limit");
 const helmet = require("helmet");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-require("dotenv").config({ path: path.join(__dirname, "../.env") }); // Load .env from root directory
+
+// Load .env - check both locations (Docker: /app/.env, Local: ../.env)
+const fs = require("fs");
+const envPath = fs.existsSync(path.join(__dirname, "../.env")) 
+    ? path.join(__dirname, "../.env") 
+    : path.join(__dirname, "..", ".env");
+require("dotenv").config({ path: envPath });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -332,30 +338,50 @@ app.get("/api/bags/:bagId/history", async (req, res) => {
     }
 });
 
-// Register donation 
+// Register donation with automatic IPFS metadata upload
 app.post("/api/bags/register", async (req, res) => {
     try {
         if (!contract || !signers.bloodBank) {
             return res.status(400).json({ error: "Contract not initialized" });
         }
 
-        const { bagId, bloodType, expiryDays, ipfsHash } = req.body;
+        const { bagId, bloodType, expiryDays, donorInfo } = req.body;
         
+        // 1. Create metadata
+        const metadata = ipfsService.createBloodBagMetadata({
+            bagId,
+            bloodType,
+            expiryDays,
+            donorInfo: donorInfo || {},
+            timestamp: Date.now()
+        });
+        
+        // 2. Upload metadata to IPFS
+        const ipfsResult = await ipfsService.uploadJSON(metadata, `bag-${bagId}-metadata.json`);
+        console.log(`✅ Metadata uploaded to IPFS: ${ipfsResult.hash}`);
+        
+        // 3. Register on blockchain with IPFS hash
         const contractWithSigner = contract.connect(signers.bloodBank);
-        const tx = await contractWithSigner.register(bagId, bloodType, expiryDays, ipfsHash || "");
+        const tx = await contractWithSigner.register(bagId, bloodType, expiryDays, ipfsResult.hash);
         await tx.wait();
 
         res.json({ 
             success: true, 
-            message: `Donation ${bagId} registered`,
-            txHash: tx.hash
+            message: `Donation ${bagId} registered with metadata`,
+            txHash: tx.hash,
+            ipfs: {
+                hash: ipfsResult.hash,
+                url: ipfsResult.url,
+                metadata
+            }
         });
     } catch (error) {
+        console.error('Register error:', error);
         res.status(500).json({ error: error.reason || error.message });
     }
 });
 
-// Transfer ownership
+// Transfer ownership (blockchain only - transfer data is small)
 app.post("/api/bags/:bagId/transfer", async (req, res) => {
     try {
         if (!contract) {
@@ -388,11 +414,12 @@ app.post("/api/bags/:bagId/transfer", async (req, res) => {
             txHash: tx.hash
         });
     } catch (error) {
+        console.error('Transfer error:', error);
         res.status(500).json({ error: error.reason || error.message });
     }
 });
 
-// Record temperature
+// Record temperature (blockchain only - temp data is small)
 app.post("/api/bags/:bagId/temperature", async (req, res) => {
     try {
         if (!contract || !signers.iotSensor) {

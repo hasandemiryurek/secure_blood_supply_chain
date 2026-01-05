@@ -1,7 +1,3 @@
-/**
- * Blood Cold Chain - Main Application JavaScript
- * Modular and optimized version
- */
 
 const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const STATUS_CLASSES = ["status-registered", "status-in-transit", "status-delivered", "status-spoiled"];
@@ -117,10 +113,6 @@ async function connectWallet() {
         console.error(error);
         logTransaction('error', `Connection failed: ${error.message}`);
     }
-}
-
-function switchAccount() {
-    alert('Hesap değiştirmek için lütfen çıkış yapıp tekrar giriş yapın.');
 }
 
 function showTab(tabName) {
@@ -309,7 +301,7 @@ async function recordTemperature() {
         if (isInRange) {
             logTransaction('success', `Temperature recorded: ${tempValue}°C (Safe)`);
         } else {
-            logTransaction('error', `⚠️ TEMPERATURE BREACH: ${tempValue}°C - Bag marked as SPOILED!`);
+            logTransaction('error', ` TEMPERATURE BREACH: ${tempValue}°C - Bag marked as Spoiled!`);
         }
         
         $('tempBagId').value = '';
@@ -436,6 +428,11 @@ async function loadAllBags() {
                     ${bag.ipfsHash ? `<a href="https://gateway.pinata.cloud/ipfs/${bag.ipfsHash}" target="_blank" class="text-blue-600"><i class="fas fa-file"></i></a>` : '-'}
                 </td>
                 <td class="px-4 py-3">
+                    <button onclick="showBagQR('${bag.bagId}')" class="text-green-600 hover:text-green-800" title="Show QR Code">
+                        <i class="fas fa-qrcode"></i>
+                    </button>
+                </td>
+                <td class="px-4 py-3">
                     <button onclick="viewBagHistory('${bag.bagId}')" class="text-purple-600 hover:text-purple-800">
                         <i class="fas fa-eye"></i> View
                     </button>
@@ -445,7 +442,7 @@ async function loadAllBags() {
         }
 
         if (bagIds.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-500">No blood bags registered yet</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-gray-500">No blood bags registered yet</td></tr>';
         }
     } catch (error) {
         console.error(error);
@@ -456,6 +453,41 @@ function viewBagHistory(bagId) {
     $('historyBagId').value = bagId;
     showTab('history');
     getBagHistory();
+}
+
+// Show QR Code for Blood Bag
+async function showBagQR(bagId) {
+    try {
+        // Check if provider is ready
+        if (!provider) {
+            alert('Please connect wallet first');
+            return;
+        }
+        
+        // Check if contract address is available
+        if (!contractAddress) {
+            alert('Contract address not loaded. Please refresh the page.');
+            return;
+        }
+        
+        // Get chain ID and contract address
+        const network = await provider.getNetwork();
+        const chainId = Number(network.chainId);
+        
+        console.log('Generating QR for:', { bagId, contractAddress, chainId });
+        
+        // Generate QR code
+        const qrDataUrl = await generateBagQRCode(bagId, contractAddress, chainId);
+        
+        if (qrDataUrl) {
+            showQRCodeModal(bagId, qrDataUrl);
+        } else {
+            alert('Failed to generate QR code. Please check console for errors.');
+        }
+    } catch (error) {
+        console.error('QR generation error:', error);
+        alert('Error generating QR code: ' + error.message);
+    }
 }
 
 // Load Stats
@@ -483,7 +515,6 @@ async function loadStats() {
     }
 }
 
-// ============ Transaction Logger ============
 function logTransaction(type, message) {
     const log = $('txLog');
     const timestamp = new Date().toLocaleTimeString();
@@ -725,6 +756,7 @@ document.addEventListener('DOMContentLoaded', function() {
     addClick('recordTemperatureBtn', recordTemperature);
     addClick('getBagHistoryBtn', getBagHistory);
     addClick('loadAllBagsBtn', loadAllBags);
+    addClick('exportBagsBtn', exportAllBagsToCSV);
     addClick('clearLogsBtn', clearLogs);
     
     // IPFS buttons
@@ -819,8 +851,8 @@ async function recordAutoTemperature() {
         await tx.wait();
         
         const status = (temp >= 2 && temp <= 6) ? '✅' : '⚠️';
-        console.log(`🌡️  Auto Temp: ${temp.toFixed(2)}°C ${status} recorded for ${randomBag}`);
-        logTransaction('info', `🌡️ Auto: ${temp.toFixed(2)}°C ${status} → ${randomBag}`);
+        console.log(` Auto Temp: ${temp.toFixed(2)}°C ${status} recorded for ${randomBag}`);
+        logTransaction('info', ` Auto: ${temp.toFixed(2)}°C ${status} → ${randomBag}`);
         
         // Refresh stats
         await loadStats();
@@ -836,3 +868,46 @@ window.addEventListener('beforeunload', () => {
         clearInterval(autoTempInterval);
     }
 });
+
+// Export All Bags to CSV
+async function exportAllBagsToCSV() {
+    if (!contract) {
+        alert('Please connect wallet first');
+        return;
+    }
+
+    try {
+        const bagIds = await contract.getAllBags();
+        
+        if (bagIds.length === 0) {
+            showInAppNotification('Info', 'No bags to export', 'info');
+            return;
+        }
+
+        const exportData = [];
+        
+        for (const bagId of bagIds) {
+            const bag = await contract.getBag(bagId);
+            const [isSafe, reason] = await contract.isSafe(bagId);
+            
+            exportData.push({
+                'Bag ID': bag.bagId,
+                'Blood Type': BLOOD_TYPES[bag.bloodType],
+                'Status': STATUS_NAMES[bag.status],
+                'Owner Address': bag.owner,
+                'Donation Date': formatDateTime(Number(bag.donationDate)),
+                'Expiry Date': formatDateTime(Number(bag.expiryDate)),
+                'Is Safe': isSafe ? 'Yes' : 'No',
+                'Safety Reason': reason,
+                'IPFS Hash': bag.ipfsHash || 'N/A'
+            });
+        }
+
+        const timestamp = new Date().toISOString().split('T')[0];
+        exportToCSV(exportData, `blood-bags-${timestamp}.csv`);
+        
+    } catch (error) {
+        console.error('Export error:', error);
+        showInAppNotification('Error', 'Failed to export data', 'error');
+    }
+}
