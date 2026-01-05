@@ -3,15 +3,15 @@ const { ethers } = require("hardhat");
 
 describe("BloodColdChainV2", function () {
     let contract;
-    let admin, bloodBank, transporter, hospital, iotSensor, other;
+    let admin, bloodBank, transporter, hospital, other;
     
     // Roles enum matching contract
-    const Role = { BLOOD_BANK: 0, TRANSPORTER: 1, HOSPITAL: 2, IOT_SENSOR: 3 };
+    const Role = { BLOOD_BANK: 0, TRANSPORTER: 1, HOSPITAL: 2 };
     const BloodType = { A_POS: 0, A_NEG: 1, B_POS: 2, B_NEG: 3, AB_POS: 4, AB_NEG: 5, O_POS: 6, O_NEG: 7 };
     const Status = { REGISTERED: 0, IN_TRANSIT: 1, DELIVERED: 2, SPOILED: 3 };
     
     beforeEach(async function () {
-        [admin, bloodBank, transporter, hospital, iotSensor, other] = await ethers.getSigners();
+        [admin, bloodBank, transporter, hospital, other] = await ethers.getSigners();
         
         const Contract = await ethers.getContractFactory("BloodColdChainV2");
         contract = await Contract.deploy();
@@ -21,7 +21,6 @@ describe("BloodColdChainV2", function () {
         await contract.addParticipant(bloodBank.address, "Kizilay", Role.BLOOD_BANK);
         await contract.addParticipant(transporter.address, "DHL", Role.TRANSPORTER);
         await contract.addParticipant(hospital.address, "City Hospital", Role.HOSPITAL);
-        await contract.addParticipant(iotSensor.address, "IoT Device", Role.IOT_SENSOR);
     });
     
     describe("Deployment", function () {
@@ -48,7 +47,7 @@ describe("BloodColdChainV2", function () {
         
         it("Should get all participants", async function () {
             const list = await contract.getAllParticipants();
-            expect(list.length).to.equal(5);
+            expect(list.length).to.equal(4);
         });
     });
     
@@ -115,14 +114,14 @@ describe("BloodColdChainV2", function () {
         });
         
         it("Should record safe temperature", async function () {
-            await contract.connect(iotSensor).recordTemp("BAG-001", 400); // 4°C
+            await contract.connect(transporter).recordTemp("BAG-001", 400); // 4°C
             const history = await contract.getHistory("BAG-001");
             expect(history[1].length).to.equal(1);
             expect(history[1][0].inRange).to.be.true;
         });
         
         it("Should mark spoiled on breach", async function () {
-            await contract.connect(iotSensor).recordTemp("BAG-001", 1000); // 10°C
+            await contract.connect(transporter).recordTemp("BAG-001", 1000); // 10°C
             const bag = await contract.getBag("BAG-001");
             expect(bag.status).to.equal(Status.SPOILED);
         });
@@ -130,7 +129,7 @@ describe("BloodColdChainV2", function () {
         it("Should fail for blood bank to record", async function () {
             await expect(
                 contract.connect(bloodBank).recordTemp("BAG-001", 400)
-            ).to.be.revertedWith("Not allowed");
+            ).to.be.revertedWith("You don't have permission");
         });
     });
     
@@ -145,7 +144,7 @@ describe("BloodColdChainV2", function () {
         it("Should report spoiled as unsafe", async function () {
             await contract.connect(bloodBank).register("BAG-001", BloodType.O_NEG, 42, "");
             await contract.connect(bloodBank).transfer("BAG-001", transporter.address, "");
-            await contract.connect(iotSensor).recordTemp("BAG-001", 1000);
+            await contract.connect(transporter).recordTemp("BAG-001", 1000);
             const [safe, reason] = await contract.isSafe("BAG-001");
             expect(safe).to.be.false;
             expect(reason).to.equal("Spoiled");
@@ -214,12 +213,12 @@ describe("BloodColdChainV2", function () {
             console.log("✅ Step 2: In Transit");
             
             // 3. Record safe temps
-            await contract.connect(iotSensor).recordTemp("E2E-001", 400);
-            await contract.connect(iotSensor).recordTemp("E2E-001", 450);
+            await contract.connect(transporter).recordTemp("E2E-001", 400);
+            await contract.connect(transporter).recordTemp("E2E-001", 450);
             console.log("✅ Step 3: Temps recorded (4°C, 4.5°C)");
             
             // 4. Temperature breach
-            await contract.connect(iotSensor).recordTemp("E2E-001", 1000);
+            await contract.connect(transporter).recordTemp("E2E-001", 1000);
             bag = await contract.getBag("E2E-001");
             expect(bag.status).to.equal(Status.SPOILED);
             console.log("🚨 Step 4: SPOILED!");
